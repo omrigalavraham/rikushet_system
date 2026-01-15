@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electric Sales | Dashboard</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;600;800&family=Heebo:wght@300;700;900&family=Montserrat:wght@700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            /* --- Client Custom Palette (Green Nature) --- */
+            
+            /* Background: Clean White & Soft Green Mist */
+            --bg-dark: #FEFEFE;
+            --bg-gradient-start: #FEFEFE;
+            --bg-gradient-end: #F2F8F4;
+
+            /* GLASS VARS */
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(1, 111, 84, 0.15);
+            --glass-blur: 40px;
+
+            /* Text Colors */
+            --text-main: #00332a;
+            --text-muted: #5a756f;
+            --text-highlight: #016f54;
+
+            /* Brand Colors */
+            --brand-primary: #016f54;    /* Deep Green */
+            --brand-secondary: #bfd630;  /* Lime Green */
+            --brand-tertiary: #488e3f;   /* Mid Green */
+
+            /* Status Colors */
+            --color-start: #016f54;
+            --color-mid: #488e3f;
+            --color-near: #bfd630;
+            --color-success: #bfd630;
+
+            --border: rgba(1, 111, 84, 0.15);
+            --shadow-soft: 0 10px 40px rgba(1, 111, 84, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Rubik', sans-serif;
+            background: radial-gradient(circle at top left, var(--bg-gradient-start), var(--bg-gradient-end));
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+        }
+
+        /* --- Animations --- */
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.98);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* --- Header: Float Glass --- */
+        header {
+            padding: 20px 40px;
+            background: transparent;
+            border: none;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 40px;
+            position: relative;
+            z-index: 100;
+        }
+
+        .header-logo h1 {
+            font-family: 'Heebo', sans-serif;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            background: linear-gradient(90deg, var(--brand-primary), var(--brand-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(1, 111, 84, 0.15);
+            text-transform: uppercase;
+            font-size: 2.2rem;
+            margin: 0;
+        }
+
+        .motivation-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            width: 100%;
+            position: relative;
+            gap: 15px;
+        }
+
+        #motivation-quote {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 2.6rem;
+            letter-spacing: -1px;
+            color: var(--text-main);
+            text-align: center;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out, transform 1.5s ease-out;
+            transform: translateY(10px);
+        }
+
+        #motivation-quote.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* --- Time Capsule --- */
+        .time-island {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid var(--glass-border);
+            border-radius: 50px;
+            padding: 10px 40px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 30px;
+            box-shadow: var(--shadow-soft);
+            min-width: 400px;
+            justify-content: center;
+        }
+
+        .clock-time {
+            font-family: 'Heebo';
+            font-weight: 800;
+            font-size: 3.5rem;
+            line-height: 1;
+            background: linear-gradient(135deg, var(--brand-primary) 30%, var(--brand-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 5px rgba(1, 111, 84, 0.2));
+        }
+
+        .date-row {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            align-items: flex-start;
+            border-right: 2px solid var(--border);
+            padding-right: 25px;
+        }
+
+        .date-badge {
+            font-size: 1.1rem;
+            font-weight: 500;
+            padding: 4px 12px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .greg-date {
+            color: var(--brand-primary);
+            background: rgba(1, 111, 84, 0.1);
+            border: 1px solid rgba(1, 111, 84, 0.2);
+        }
+
+        .hebrew-date {
+            color: #4a6812;
+            background: rgba(191, 214, 48, 0.15);
+            border: 1px solid rgba(191, 214, 48, 0.3);
+            font-weight: 700;
+        }
+
+        /* --- Dashboard Grid --- */
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 2fr 1.2fr;
+            gap: 30px;
+            padding: 0 30px 30px 30px;
+            overflow: hidden;
+            opacity: 0;
+            animation: fadeInScale 0.8s ease-out forwards 0.2s;
+        }
+
+        /* GLASS UTILITY */
+        .glass-panel {
+            background: var(--card-bg);
+            border-radius: 24px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-soft);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            padding: 20px 30px;
+            background: linear-gradient(90deg, var(--brand-primary), var(--brand-tertiary));
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #ffffff;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* --- Total Sales Island --- */
+        .total-island {
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+            border-radius: 50px;
+            padding: 10px 30px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 25px;
+            box-shadow: 0 0 30px rgba(191, 214, 48, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            min-width: 400px;
+            margin-right: 30px;
+        }
+
+        .total-separator {
+            width: 1px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .total-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .total-label {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.8);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .total-value {
+            font-family: 'Heebo';
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: #fff;
+            line-height: 1;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+        }
+
+
+        /* --- Left: Table (Power Grid) --- */
+        .left-panel {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .table-header-row {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr 1fr 1fr;
+            padding: 15px 40px;
+            font-weight: 700;
+            color: #fff;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: linear-gradient(90deg, var(--brand-primary), var(--brand-tertiary));
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(1, 111, 84, 0.2);
+            border: none;
+        }
+
+        .scroll-area {
+            overflow-y: auto;
+            flex: 1;
+            padding: 0 10px;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .scroll-area::-webkit-scrollbar {
+            display: none;
+        }
+
+        .rep-row {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr 1fr 1fr;
+            padding: 35px 50px;
+            margin-bottom: 25px;
+            align-items: center;
+            font-size: 2.4rem;
+            color: var(--text-main);
+
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(1, 111, 84, 0.1);
+            border-left: 4px solid var(--brand-secondary);
+            border-radius: 30px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.03);
+
+            opacity: 0;
+            transform: translateY(20px);
+            animation: waterfallPop 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+            transition: transform 0.3s ease, background 0.3s, border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .table-header-row>div:nth-child(2),
+        .table-header-row>div:nth-child(3),
+        .table-header-row>div:last-child,
+        .rep-row>div:nth-child(2),
+        .rep-row>div:nth-child(3),
+        .rep-row>div:last-child {
+            text-align: center;
+        }
+
+        @keyframes waterfallPop {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .rep-row:hover {
+            transform: translateY(-5px) scale(1.01);
+            background: #fff;
+            border-color: var(--brand-secondary);
+            box-shadow: 0 15px 40px rgba(1, 111, 84, 0.15);
+            z-index: 10;
+        }
+
+        .rep-name {
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .rep-avatar {
+            width: 90px;
+            height: 90px;
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+            border-radius: 50%;
+            border: 3px solid #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            color: #fff;
+            box-shadow: 0 4px 10px rgba(1, 111, 84, 0.2);
+        }
+
+        .num-val {
+            font-family: 'Heebo';
+            font-weight: 800;
+        }
+
+        /* --- Towers --- */
+        .towers-wrapper {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            align-items: flex-end;
+            height: 100%;
+            padding: 20px 40px 60px 40px;
+            perspective: 1000px;
+        }
+
+        .tower-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 180px;
+            height: 100%;
+            justify-content: flex-end;
+            position: relative;
+            transition: transform 0.3s;
+        }
+
+        .tower-group:hover {
+            transform: translateY(-5px);
+        }
+
+        .tower-glass {
+            width: 100%;
+            flex: 0 0 auto;
+            border-radius: 15px 15px 4px 4px;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transition: height 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.05);
+            border: 4px solid transparent;
+        }
+
+        .t-rank-1 {
+            background: transparent;
+            border-color: var(--brand-secondary);
+            box-shadow: 0 0 20px rgba(191, 214, 48, 0.3);
+        }
+
+        .t-rank-2 {
+            background: transparent;
+            border-color: var(--brand-tertiary);
+            box-shadow: 0 0 15px rgba(72, 142, 63, 0.2);
+        }
+
+        .t-rank-3 {
+            background: transparent;
+            border-color: var(--brand-primary);
+            box-shadow: 0 0 15px rgba(1, 111, 84, 0.2);
+        }
+
+        .tower-name {
+            position: absolute;
+            bottom: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--text-main);
+            white-space: nowrap;
+            text-align: center;
+            width: 200%;
+            text-shadow: none;
+        }
+
+        .tower-crown {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 5rem;
+            filter: drop-shadow(0 0 20px rgba(191, 214, 48, 0.8));
+            animation: bounce 2s infinite ease-in-out;
+            z-index: 10;
+        }
+
+        .tower-pct {
+            position: absolute;
+            bottom: 10px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: inherit;
+        }
+
+        /* --- Right Panel --- */
+        .right-panel {
+            display: grid;
+            grid-template-rows: 1fr 1fr;
+            gap: 25px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 100%;
+            width: 100%;
+            padding: 15px;
+        }
+
+        /* --- Weekly Best: PODIUM LAYOUT --- */
+        .weekly-list {
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            position: relative;
+            perspective: 1200px;
+            transform-style: preserve-3d;
+        }
+
+        .holo-card {
+            width: 240px;
+            height: 350px;
+            border-radius: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding-top: 30px;
+            position: absolute;
+            transition: all 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+            backface-visibility: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            overflow: hidden;
+        }
+
+        .holo-card[data-rank="1"] {
+            left: 50%;
+            margin-left: -120px;
+            z-index: 30;
+            transform: scale(1.1);
+        }
+
+        .holo-card[data-rank="2"] {
+            left: 50%;
+            margin-left: -390px;
+            z-index: 20;
+            transform: scale(1.0);
+        }
+
+        .holo-card[data-rank="3"] {
+            left: 50%;
+            margin-left: 150px;
+            z-index: 20;
+            transform: scale(0.9);
+        }
+
+        .holo-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -150%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(120deg, transparent 30%, rgba(255, 255, 255, 0.4) 50%, transparent 70%);
+            transform: skewX(-25deg);
+            animation: shinePass 3s infinite ease-in-out;
+            pointer-events: none;
+            mix-blend-mode: overlay;
+        }
+
+        .holo-card[data-rank="1"] {
+            background: linear-gradient(135deg, #bfd630 0%, #e9f5a0 25%, #a8bd28 50%, #bfd630 75%, #8a9c20 100%);
+            border-color: #dfff4f;
+            box-shadow: 0 0 40px rgba(191, 214, 48, 0.4), inset 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        .holo-card[data-rank="2"] {
+            background: linear-gradient(135deg, #E0E0E0 0%, #FFFFFF 25%, #d1e0dc 50%, #E0E0E0 75%, #505050 100%);
+            border-color: #fff;
+            box-shadow: 0 0 40px rgba(255, 255, 255, 0.3), inset 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        .holo-card[data-rank="3"] {
+            background: linear-gradient(135deg, #488e3f 0%, #76b56d 25%, #397032 50%, #488e3f 75%, #2a5225 100%);
+            border-color: #8ed684;
+            box-shadow: 0 0 40px rgba(72, 142, 63, 0.3), inset 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        .holo-rank-badge {
+            position: absolute;
+            top: 10px;
+            font-size: 2rem;
+            filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.5));
+            z-index: 15;
+        }
+
+        .holo-card[data-rank="1"] .holo-rank-badge { right: 15px; }
+        .holo-card[data-rank="2"] .holo-rank-badge { right: 15px; left: auto; }
+        .holo-card[data-rank="3"] .holo-rank-badge { right: 15px; }
+
+        .holo-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 4px solid rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: #fff;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            margin-bottom: 20px;
+            transform: translateZ(10px);
+            z-index: 2;
+        }
+
+        .holo-name {
+            font-size: 2rem;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            -webkit-text-stroke: 1.5px black;
+            text-stroke: 1.5px black;
+            paint-order: stroke fill;
+            margin-bottom: 5px;
+            transform: translateZ(5px);
+            z-index: 2;
+        }
+
+        .holo-stat-label {
+            font-size: 1rem;
+            color: #000;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 800;
+            text-shadow: none;
+            background: rgba(255, 255, 255, 0.4);
+            padding: 2px 8px;
+            border-radius: 4px;
+            z-index: 2;
+        }
+
+        .holo-val {
+            font-family: 'Heebo';
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: #ffffff;
+            -webkit-text-stroke: 3px black;
+            paint-order: stroke fill;
+            text-shadow: none;
+            filter: none;
+            background: none;
+            -webkit-background-clip: border-box;
+            transform: translateZ(20px);
+            z-index: 2;
+            margin-top: 5px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Update Ticker */
+        .ticker-wrap {
+            overflow: hidden;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            height: 120px;
+            background: #000000;
+            border-top: 2px solid var(--brand-secondary);
+            margin: 0 30px 30px 30px;
+            border-radius: 20px;
+            width: auto;
+            z-index: 200;
+            box-shadow: var(--shadow-soft);
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            transform: translateZ(0);
+            will-change: transform;
+        }
+
+        .t-item {
+            border-left: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 0 60px;
+            display: flex;
+            align-items: center;
+            height: 100%;
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-shadow: none;
+        }
+
+        .t-item span:first-child {
+            color: #ffffff !important;
+            font-weight: 800;
+            font-size: 2.2rem;
+            letter-spacing: 0.5px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+            opacity: 1 !important;
+        }
+
+        .t-item .num-font {
+            font-weight: 900;
+            font-size: 3rem;
+            margin-left: 15px;
+            filter: drop-shadow(0 0 8px currentColor);
+        }
+
+        .ticker-move {
+            display: flex;
+            align-items: center;
+            animation: ticker 120s linear infinite;
+            height: 100%;
+        }
+
+        @keyframes ticker {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        .num-font {
+            font-family: 'Heebo', sans-serif;
+            letter-spacing: 1px;
+        }
+
+        /* --- Avatar Editor Modal --- */
+        #avatar-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .hidden { display: none !important; }
+
+        .editor-card {
+            background: #1e293b;
+            width: 400px;
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .crop-container {
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+            background: #000;
+            border-radius: 12px;
+            cursor: move;
+        }
+
+        #editor-image {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: none;
+            transform-origin: center;
+            user-select: none;
+            pointer-events: none;
+        }
+
+        .guide-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 260px;
+            height: 260px;
+            border: 2px dashed rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            pointer-events: none;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7);
+        }
+
+        .controls-row {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .slider-control {
+            width: 100%;
+            accent-color: var(--brand-secondary);
+        }
+
+        .action-btn {
+            padding: 10px 25px;
+            border-radius: 8px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .btn-save {
+            background: var(--brand-secondary);
+            color: #000;
+        }
+
+        .btn-cancel {
+            background: #475569;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- AVATAR EDITOR MODAL -->
+    <div id="avatar-modal" class="hidden">
+        <div class="editor-card">
+            <h3 style="color:white; margin:0;">עריכת תמונה: <span id="editor-rep-name"
+                    style="color:var(--brand-secondary)"></span></h3>
+
+            <div class="crop-container" id="crop-area">
+                <img id="editor-image" src="" alt="Upload">
+                <div class="guide-circle"></div>
+            </div>
+
+            <div class="controls-row">
+                <span style="color:white">🔍</span>
+                <input type="range" id="zoom-slider" min="0.5" max="3" step="0.1" value="1" class="slider-control">
+            </div>
+
+            <div class="controls-row">
+                <button class="action-btn btn-cancel" onclick="closeEditor()">ביטול</button>
+                <button class="action-btn btn-save" onclick="saveAvatar()">שמור תמונה</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden File Input for Avatars -->
+    <input type="file" id="avatar-input" accept="image/*" style="display: none;" onchange="handleFileSelect(this)">
+
+    <!-- HEADER -->
+    <header>
+        <div class="header-logo">
+            <img src="logo_riku.png" alt="לוגו לקוח"
+                style="max-height: 300px; width: 300px; filter: drop-shadow(0 0 15px rgba(1, 111, 84, 0.3)); transform: translateX(-140px);">
+        </div>
+
+        <div class="motivation-container">
+            <div id="motivation-quote">"הדרך היחידה לעשות עבודה נהדרת היא לאהוב את מה שאתה עושה."</div>
+
+            <!-- Total Sales Island (Renamed and Updated Source) -->
+            <div class="total-island">
+                <div class="total-label">סה״כ מכירות</div>
+                <div class="total-value" id="total-sales-display">0</div>
+            </div>
+        </div>
+
+        <div class="time-island">
+            <div class="date-row">
+                <div class="date-badge greg-date" id="greg-date">01.01.2025</div>
+                <div class="date-badge hebrew-date" id="heb-date">א' בטבת</div>
+            </div>
+            <div class="clock-time" id="clock">12:00</div>
+        </div>
+    </header>
+
+    <!-- MAIN DASHBOARD -->
+    <div class="dashboard-container" id="dashboard">
+
+        <!-- Left: Table -->
+        <div class="glass-panel left-panel">
+            <div class="table-header-row">
+                <div>שם הנציג</div>
+                <!-- Updated Headers -->
+                <div>ממוצע לעסקה</div>
+                <div>פריט לעסקה</div>
+                <div>סה״כ מכירות</div>
+            </div>
+            <div class="scroll-area" id="table-body"></div>
+        </div>
+
+        <!-- Right: Charts -->
+        <div class="right-panel">
+            <div class="glass-panel">
+                <div class="panel-header">
+                    <!-- Updated Title -->
+                    <span>👑 מצטייני החודש</span>
+                    <span
+                        style="font-size: 0.9rem; color: var(--brand-secondary); font-weight: bold; text-shadow: 0 0 10px var(--brand-secondary);">LIVE
+                        ●</span>
+                </div>
+                <div class="chart-container">
+                    <div id="towers-display" class="towers-wrapper"></div>
+                </div>
+            </div>
+
+            <div class="glass-panel">
+                <div class="panel-header">🚀 מצטיין שבועי (במצטבר)</div>
+                <div class="weekly-list" id="weekly-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER: TICKER -->
+    <div class="ticker-wrap">
+        <div class="ticker-move" id="ticker-content"></div>
+    </div>
+
+    <script>
+        Chart.register(ChartDataLabels);
+
+        /* --- Global Variables --- */
+        let holoIndex = 0;
+        let holoInterval;
+
+        /* --- CLOCK & DATE LOGIC --- */
+        const hebDayMap = [
+            '', 'א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ז׳', 'ח׳', 'ט׳', 'י׳',
+            'י״א', 'י״ב', 'י״ג', 'י״ד', 'ט״ו', 'ט״ז', 'י״ז', 'י״ח', 'י״ט', 'כ׳',
+            'כ״א', 'כ״ב', 'כ״ג', 'כ״ד', 'כ״ה', 'כ״ו', 'כ״ז', 'כ״ח', 'כ״ט', 'ל׳'
+        ];
+
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+
+            document.getElementById('greg-date').innerText = now.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+            try {
+                const monthName = new Intl.DateTimeFormat('he-IL-u-ca-hebrew', { month: 'long' }).format(now);
+                const dayStr = new Intl.DateTimeFormat('en-u-ca-hebrew', { day: 'numeric' }).format(now);
+                const dayNum = parseInt(dayStr.replace(/\D/g, ''));
+                const dayLetter = hebDayMap[dayNum] || (dayNum + "'");
+                document.getElementById('heb-date').innerText = `${dayLetter} ב${monthName}`;
+            } catch (e) {
+                console.error("Date Error:", e);
+                document.getElementById('heb-date').innerText = "טוען תאריך...";
+            }
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        /* --- MOTIVATION ENGINE --- */
+        const quotes = [
+            "הדרך היחידה לעשות עבודה נהדרת היא לאהוב את מה שאתה עושה.",
+            "הצלחה היא סך כל המאמצים הקטנים, שחוזרים על עצמם יום אחר יום.",
+            "אל תחכה להזדמנות, צור אותה.",
+            "הגבול היחיד שלך הוא המחשבה שלך.",
+            "תאמין שאתה יכול, ואתה כבר בחצי הדרך לשם.",
+            "מנצחים לא מפחדים להפסיד. אבל מפסידים פוחדים לנצח.",
+            "העתיד שייך לאלה שמאמינים ביופי של החלומות שלהם.",
+            "קשה יש רק בלחם, וגם אותו אוכלים.",
+            "תעבוד בשקט, תן להצלחה לעשות את הרעש."
+        ];
+
+        function rotateQuote() {
+            const el = document.getElementById('motivation-quote');
+            el.classList.remove('visible'); 
+
+            setTimeout(() => {
+                const rnd = Math.floor(Math.random() * quotes.length);
+                el.innerText = `"${quotes[rnd]}"`;
+                el.classList.add('visible');
+            }, 1000);
+        }
+
+        setTimeout(() => document.getElementById('motivation-quote').classList.add('visible'), 500);
+        setInterval(rotateQuote, 30000);
+
+        /* --- DATA LOGIC --- */
+        const CSV_EXPORT_URL = 'https://docs.google.com/spreadsheets/d/1hNvBANVgzdS-hiyjmEj5s0Qi7SjwnItYw2YzSy0Kxd0/export?format=csv';
+
+        const fmt = (n) => new Intl.NumberFormat('en-US').format(n);
+        let salesData = [];
+        
+        // Globals for Top Stats
+        window.monthlyTarget = 0; // C33
+        window.monthlyActual = 0; // D33
+
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchGoogleSheetData();
+            setInterval(fetchGoogleSheetData, 60 * 1000);
+        });
+
+        async function fetchGoogleSheetData() {
+            console.log("Attempting Direct Fetch...");
+            try {
+                const r = await fetch(CSV_EXPORT_URL + '&nocache=' + Date.now());
+                if (!r.ok) throw new Error('Direct fetch failed');
+                const data = await r.text();
+
+                if (data.trim().startsWith('<!DOCTYPE') || data.trim().startsWith('<html')) {
+                    throw new Error('Got HTML instead of CSV');
+                }
+
+                console.log("Direct fetch success!");
+                processCSV(data);
+                return;
+            } catch (err) {
+                console.warn("Direct fetch failed (" + err.message + "), switching to Proxy...");
+            }
+
+            try {
+                const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(CSV_EXPORT_URL + '&nocache=' + Date.now());
+                const r = await fetch(proxyUrl);
+                if (!r.ok) throw new Error('Proxy error: ' + r.status);
+                const data = await r.text();
+                console.log("Proxy fetch success!");
+                processCSV(data);
+            } catch (err) {
+                console.error("All fetch methods failed:", err);
+            }
+        }
+
+        function handleFileUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) { processCSV(e.target.result); };
+            reader.readAsText(file);
+        }
+
+        function parseCSVLine(text) {
+            const result = [];
+            let current = '';
+            let inQuote = false;
+            
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                if (char === '"') {
+                    inQuote = !inQuote;
+                } else if (char === ',' && !inQuote) {
+                    result.push(current);
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current);
+            return result.map(col => col.replace(/^"|"$/g, '').trim());
+        }
+
+        // Helper to safely get value from Rows Array
+        function getCell(rows, rIndex, cIndex) {
+            if (!rows[rIndex]) return '0';
+            const row = parseCSVLine(rows[rIndex].replace('\r', ''));
+            const val = row[cIndex];
+            return val ? val.replace(/,/g, '').trim() : '0'; // Remove commas
+        }
+
+        function cleanNum(val) {
+            // Remove non-numeric chars except dot
+            const cleaned = val.replace(/[^0-9.]/g, '');
+            return parseFloat(cleaned) || 0;
+        }
+
+        function processCSV(csvText) {
+            const rows = csvText.split('\n'); // All rows
+
+            // --- MAPPING LOGIC (0-based Index) ---
+            // Columns: H=7, I=8, J=9
+            // Rows: 2=1, 3=2, 4=3, 5=4 ... 33=32
+
+            const cols = [7, 8, 9]; // H, I, J
+            salesData = [];
+
+            // Iterate through the 3 agents
+            cols.forEach(c => {
+                const name = getCell(rows, 1, c); // Row 2 (Name)
+                if(!name || name === '0') return;
+
+                const avgDeal = cleanNum(getCell(rows, 2, c));   // Row 3 (Avg Deal)
+                const itemDeal = cleanNum(getCell(rows, 3, c));  // Row 4 (Item per Deal)
+                const totalSales = cleanNum(getCell(rows, 4, c)); // Row 5 (Total Sales)
+
+                salesData.push({
+                    name: name,
+                    avgDeal: avgDeal,
+                    itemDeal: itemDeal,
+                    totalSales: totalSales,
+                    // For compatibility with weekly best chart, use totalSales
+                    weekly: totalSales 
+                });
+            });
+
+            // --- Top Stats (C33, D33) ---
+            // Row 33 = Index 32
+            // Col C = 2, Col D = 3
+            window.monthlyTarget = cleanNum(getCell(rows, 32, 2)); // C33
+            window.monthlyActual = cleanNum(getCell(rows, 32, 3)); // D33
+
+            updateDashboard();
+        }
+
+        let isInitialized = false;
+
+        function updateDashboard() {
+            document.getElementById('dashboard').style.opacity = '1';
+
+            renderTable();
+            renderChart();
+            renderWeekly();
+            renderTicker();
+            renderTotal();
+
+            if (!isInitialized) {
+                initScroll();
+                isInitialized = true;
+            }
+        }
+
+        function initScroll() {
+            const el = document.getElementById('table-body');
+            let lastTime = 0;
+            let waitTimer = 0;
+            const WAIT_TIME = 2000;
+            const SCROLL_SPEED = 0.15;
+
+            let direction = 1; 
+            let state = 'scroll'; 
+
+            function step(timestamp) {
+                if (!lastTime) lastTime = timestamp;
+                const elapsed = timestamp - lastTime;
+                lastTime = timestamp;
+
+                if (state === 'wait') {
+                    waitTimer += elapsed;
+                    if (waitTimer >= WAIT_TIME) {
+                        waitTimer = 0;
+                        state = 'scroll';
+                    }
+                } else {
+                    const maxScroll = el.scrollHeight - el.clientHeight;
+                    if (maxScroll <= 0) {
+                        requestAnimationFrame(step);
+                        return;
+                    }
+
+                    if (direction === 1) {
+                        if (el.scrollTop >= maxScroll - 1) {
+                            el.scrollTop = maxScroll; 
+                            state = 'wait';
+                            direction = -1; 
+                        } else {
+                            el.scrollTop += SCROLL_SPEED * elapsed;
+                        }
+                    } else {
+                        if (el.scrollTop <= 0) {
+                            el.scrollTop = 0; 
+                            state = 'wait';
+                            direction = 1; 
+                        } else {
+                            el.scrollTop -= SCROLL_SPEED * elapsed;
+                        }
+                    }
+                }
+                requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+        }
+
+        function getColor(val, type) {
+            // Simplified coloring based on values just for aesthetics
+            // You can adjust logic if there are targets for Avg/Item
+            return 'var(--brand-primary)';
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = salesData.map((rep, i) => {
+                
+                // Colors
+                const successColor = 'var(--text-main)';
+
+                return `
+                <div class="rep-row" style="animation-delay: ${i * 0.1}s; grid-template-columns: 1.5fr 1fr 1fr 1fr;">
+                    <div class="rep-name">
+                        <div class="rep-avatar">${getAvatarHtml(rep.name)}</div>
+                        ${rep.name}
+                    </div>
+                    
+                    <!-- Average per Deal -->
+                    <div class="num-val" style="font-size: 1.8rem;">
+                        ${fmt(rep.avgDeal)}
+                    </div>
+
+                    <!-- Item per Deal -->
+                    <div class="num-val" style="font-size: 1.8rem;">
+                        ${rep.itemDeal}
+                    </div>
+                    
+                    <!-- Total Sales -->
+                    <div class="num-val" style="font-size: 2rem; color: var(--brand-secondary);">
+                        ${fmt(rep.totalSales)}
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function renderChart() {
+            const container = document.getElementById('towers-display');
+            if (!container) return;
+
+            // Sort by Total Sales
+            const sorted = [...salesData].sort((a, b) => b.totalSales - a.totalSales).slice(0, 3);
+            let podium = [];
+            if (sorted.length >= 2) podium = [sorted[1], sorted[0], sorted[2]];
+            else podium = sorted;
+            podium = podium.filter(x => x);
+
+            container.innerHTML = podium.map((rep, i) => {
+                const realRank = sorted.indexOf(rep) + 1;
+                let crownHtml = '';
+                if (realRank === 1 && rep.totalSales > 0) crownHtml = `<div class="tower-crown">👑</div>`;
+
+                let heightPct = 60;
+                if (realRank === 1) heightPct = 100;
+                if (realRank === 2) heightPct = 75;
+
+                let pctColor = 'var(--brand-primary)';
+                if (realRank === 1) pctColor = 'var(--brand-secondary)'; // Lime
+                if (realRank === 2) pctColor = 'var(--brand-tertiary)';  // Mid Green
+                
+                return `
+                <div class="tower-group">
+                    ${crownHtml}
+                    <div class="tower-glass t-rank-${realRank}" style="height: 0px;" id="bar-${i}" data-final-height="${heightPct}%">
+                        <!-- Displaying Total Sales inside tower -->
+                        <div class="tower-pct" style="color: ${pctColor}; top: 50%; transform: translateY(-50%); bottom: auto; font-size: 3.5rem; text-shadow: 0 0 10px rgba(255,255,255,0.8);">${fmt(rep.totalSales)}</div>
+                    </div>
+                    <div class="tower-name" style="visibility: visible;">${rep.name}</div>
+                </div>
+                `;
+            }).join('');
+
+            setTimeout(() => {
+                podium.forEach((rep, i) => {
+                    const el = document.getElementById(`bar-${i}`);
+                    if (el) {
+                        el.style.height = el.getAttribute('data-final-height');
+                    }
+                });
+            }, 100);
+        }
+
+        function renderWeekly() {
+            // "Weekly Best" now effectively shows Top Sales (same as daily chart per user request logic implied, or cumulative if source differs)
+            // Using totalSales for this list
+            const container = document.getElementById('weekly-list');
+            const sorted = [...salesData].sort((a, b) => b.totalSales - a.totalSales).slice(0, 3);
+            const medals = ['👑', '🥈', '🥉'];
+
+            const podiumOrder = sorted.length >= 3 ? [sorted[1], sorted[0], sorted[2]] : sorted;
+
+            container.innerHTML = podiumOrder.map((rep, displayIndex) => {
+                const originalRank = sorted.indexOf(rep) + 1;
+                const hasSales = rep.totalSales > 0;
+
+                return `
+                <div class="holo-card" data-rank="${originalRank}">
+                    <div class="holo-rank-badge">${medals[originalRank - 1]}</div>
+                    ${hasSales ? `
+                        <div class="holo-avatar">${getAvatarHtml(rep.name)}</div>
+                        <div class="holo-name">${rep.name}</div>
+                        <div class="holo-stat-label">סה״כ מכירות</div>
+                        <div class="holo-val">${fmt(rep.totalSales)}</div>
+                    ` : ''}
+                </div>
+                `;
+            }).join('');
+        }
+
+        function renderTicker() {
+            const container = document.getElementById('ticker-content');
+            const loopData = [];
+            // Duplicate data for ticker smoothness
+            if (salesData.length > 0) {
+                for (let i = 0; i < 6; i++) loopData.push(...salesData);
+            }
+
+            container.innerHTML = loopData.map(rep => {
+                return `
+                <div class="t-item">
+                    <span style="color: var(--text-main); margin-left: 10px; font-weight:600;">${rep.name}</span> 
+                    <span class="num-font" style="color: var(--brand-secondary);">
+                        ${fmt(rep.totalSales)} ₪
+                    </span>
+                </div>`;
+            }).join('');
+        }
+
+        /* --- AVATAR SYSTEM LOGIC --- */
+        let currentTargetRep = '';
+        let editorState = { x: 0, y: 0, scale: 1, isDragging: false, startX: 0, startY: 0 };
+
+        function handleAvatarClick(name) {
+            currentTargetRep = name;
+            document.getElementById('avatar-input').click();
+        }
+
+        function handleFileSelect(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    openEditor(e.target.result);
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+            input.value = ''; 
+        }
+
+        function openEditor(src) {
+            const modal = document.getElementById('avatar-modal');
+            const img = document.getElementById('editor-image');
+            const nameSpan = document.getElementById('editor-rep-name');
+
+            img.src = src;
+            nameSpan.innerText = currentTargetRep;
+            modal.classList.remove('hidden');
+
+            editorState = { x: 0, y: 0, scale: 1, isDragging: false, startX: 0, startY: 0 };
+            updateEditorTransform();
+            document.getElementById('zoom-slider').value = 1;
+
+            initDragEvents();
+        }
+
+        function closeEditor() {
+            document.getElementById('avatar-modal').classList.add('hidden');
+        }
+
+        function initDragEvents() {
+            const container = document.getElementById('crop-area');
+            const slider = document.getElementById('zoom-slider');
+
+            container.onmousedown = (e) => {
+                editorState.isDragging = true;
+                editorState.startX = e.clientX - editorState.x;
+                editorState.startY = e.clientY - editorState.y;
+            };
+
+            window.onmouseup = () => editorState.isDragging = false;
+
+            window.onmousemove = (e) => {
+                if (!editorState.isDragging) return;
+                e.preventDefault();
+                editorState.x = e.clientX - editorState.startX;
+                editorState.y = e.clientY - editorState.startY;
+                updateEditorTransform();
+            };
+
+            slider.oninput = (e) => {
+                editorState.scale = parseFloat(e.target.value);
+                updateEditorTransform();
+            };
+        }
+
+        function updateEditorTransform() {
+            const img = document.getElementById('editor-image');
+            img.style.transform = `translate(-50%, -50%) translate(${editorState.x}px, ${editorState.y}px) scale(${editorState.scale})`;
+        }
+
+        function saveAvatar() {
+            const img = document.getElementById('editor-image');
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            const size = 300;
+            canvas.width = size;
+            canvas.height = size;
+
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, size, size);
+
+            ctx.translate(size / 2 + editorState.x, size / 2 + editorState.y);
+            ctx.scale(editorState.scale, editorState.scale);
+            ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
+
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            localStorage.setItem('avatar_' + currentTargetRep, dataUrl);
+
+            closeEditor();
+            updateDashboard();
+        }
+
+        function getAvatarHtml(name) {
+            const saved = localStorage.getItem('avatar_' + name);
+            if (saved) {
+                return `<img src="${saved}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" onclick="handleAvatarClick('${name}')">`;
+            }
+            return `<div style="width:100%; height:100%; display:flex; justify-content:center; align-items:center;" onclick="handleAvatarClick('${name}')">${name[0]}</div>`;
+        }
+
+        function renderTotal() {
+            // Top Header Stats Logic
+            
+            // 1. Total Sales from D33
+            const totalSales = window.monthlyActual;
+
+            // 2. Monthly Percent: D33 / C33
+            let monthlyPct = 0;
+            if (window.monthlyTarget > 0) {
+                monthlyPct = (window.monthlyActual / window.monthlyTarget) * 100;
+            }
+
+            const container = document.querySelector('.total-island');
+
+            if (container) {
+                container.innerHTML = `
+                    <div class="total-section">
+                        <div class="total-label" style="font-size: 0.9rem;">סה״כ מכירות</div>
+                        <div class="total-value" style="font-size: 3rem;">${fmt(totalSales)}</div>
+                    </div>
+
+                    <div class="total-separator"></div>
+
+                    <div class="total-section">
+                        <div class="total-label" style="font-size: 0.9rem;">יעד חודשי</div>
+                        <div class="total-value" style="font-size: 3rem;">${Math.round(monthlyPct)}%</div>
+                    </div>
+                `;
+            }
+        }
+
+    </script>
+</body>
+
+</html>
