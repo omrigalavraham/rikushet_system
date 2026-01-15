@@ -822,7 +822,7 @@
     <!-- HEADER -->
     <header>
         <div class="header-logo">
-            <img src="logo_riku.png" alt="לוגו לקוח"
+            <img src="logo_riku.jpg" alt="לוגו לקוח"
                 style="max-height: 300px; width: 300px; filter: drop-shadow(0 0 15px rgba(1, 111, 84, 0.3)); transform: translateX(-140px);">
         </div>
 
@@ -1184,7 +1184,7 @@
             const container = document.getElementById('towers-display');
             if (!container) return;
 
-            // Sort by Total Sales
+            // מיון לפי סה"כ מכירות
             const sorted = [...salesData].sort((a, b) => b.totalSales - a.totalSales).slice(0, 3);
             let podium = [];
             if (sorted.length >= 2) podium = [sorted[1], sorted[0], sorted[2]];
@@ -1207,11 +1207,16 @@
                 return `
                 <div class="tower-group">
                     ${crownHtml}
-                    <div class="tower-glass t-rank-${realRank}" style="height: 0px;" id="bar-${i}" data-final-height="${heightPct}%">
-                        <!-- Displaying Total Sales inside tower -->
-                        <div class="tower-pct" style="color: ${pctColor}; top: 50%; transform: translateY(-50%); bottom: auto; font-size: 3.5rem; text-shadow: 0 0 10px rgba(255,255,255,0.8);">${fmt(rep.totalSales)}</div>
+                    <!-- עמודה ריקה ממספרים -->
+                    <div class="tower-glass t-rank-${realRank}" style="height: 0px;" id="bar-${i}" data-final-height="${heightPct}%"></div>
+                    
+                    <!-- שם הנציג -->
+                    <div class="tower-name" style="visibility: visible; margin-top: 15px;">${rep.name}</div>
+                    
+                    <!-- המספר מופיע מתחת לשם -->
+                    <div style="font-family: 'Heebo'; font-weight: 900; font-size: 2rem; margin-top: 5px; color: ${pctColor};">
+                        ${fmt(rep.totalSales)}
                     </div>
-                    <div class="tower-name" style="visibility: visible;">${rep.name}</div>
                 </div>
                 `;
             }).join('');
@@ -1227,26 +1232,30 @@
         }
 
         function renderWeekly() {
-            // "Weekly Best" now effectively shows Top Sales (same as daily chart per user request logic implied, or cumulative if source differs)
-            // Using totalSales for this list
             const container = document.getElementById('weekly-list');
-            const sorted = [...salesData].sort((a, b) => b.totalSales - a.totalSales).slice(0, 3);
+            
+            // מיון לפי ממוצע לעסקה
+            const sorted = [...salesData].sort((a, b) => b.avgDeal - a.avgDeal).slice(0, 3);
             const medals = ['👑', '🥈', '🥉'];
 
             const podiumOrder = sorted.length >= 3 ? [sorted[1], sorted[0], sorted[2]] : sorted;
 
             container.innerHTML = podiumOrder.map((rep, displayIndex) => {
                 const originalRank = sorted.indexOf(rep) + 1;
-                const hasSales = rep.totalSales > 0;
+                // מציג רק אם יש נתונים
+                const hasData = rep.avgDeal > 0;
+
+                // עיגול המספר כלפי מטה (ללא נקודה עשרונית)
+                const avgDisplay = Math.floor(rep.avgDeal);
 
                 return `
                 <div class="holo-card" data-rank="${originalRank}">
                     <div class="holo-rank-badge">${medals[originalRank - 1]}</div>
-                    ${hasSales ? `
+                    ${hasData ? `
                         <div class="holo-avatar">${getAvatarHtml(rep.name)}</div>
                         <div class="holo-name">${rep.name}</div>
-                        <div class="holo-stat-label">סה״כ מכירות</div>
-                        <div class="holo-val">${fmt(rep.totalSales)}</div>
+                        <div class="holo-stat-label">ממוצע לעסקה</div>
+                        <div class="holo-val">${avgDisplay}</div>
                     ` : ''}
                 </div>
                 `;
